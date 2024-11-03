@@ -7,63 +7,71 @@ array = [
     ["t(R2)", "", "", 0, 1, 0, "", ""],
     ["Z(R3)", "", "", 0, 0, 1, "", ""],
 ]
-augument=[
-    ['a','b','c'],
-    ['d','e','f'],
-    ['g','h',0],
+augument = [
+    ["a", "b", "c"],
+    ["d", "e", "f"],
+    ["g", "h", 0],
 ]
 c = 0
 
 
 def get_data(choice):
-    global array,augument
-    cnt=0
+    global array, augument
+    cnt = 0
     print(f"\n----------------------\n")
-    for j in [f"FOR ax + by{'<' if choice == 1 else '>'}= c",f"FOR dx + ey {'<' if choice == 1 else '>'}=  f","FOR Z= gx+hy"]:
+    for j in [
+        f"FOR ax + by{'<' if choice == 1 else '>'}= c",
+        f"FOR dx + ey {'<' if choice == 1 else '>'}=  f",
+        "FOR Z= gx+hy",
+    ]:
         print(f"\n{j}")
         for i in range(3):
-            if cnt == 2 and i == 2: 
+            if cnt == 2 and i == 2:
                 break
             while 1:
                 try:
-                    augument[cnt][i] = Fraction(float(input(f"{augument[cnt][i]} = "))).limit_denominator(10)
+                    augument[cnt][i] = Fraction(
+                        float(input(f"{augument[cnt][i]} = "))
+                    ).limit_denominator(10)
                     break
                 except ValueError:
                     print("INVALD INPUT ENTER A INTEGER")
                     continue
-            
-        cnt+=1
-       
+
+        cnt += 1
+
     print("\nFOR x <= 0")
     print("FOR y <= 0")
-    
+
     if choice == 2:
         print("\n\nThe Augumented Form:")
         print_arugument()
         print("AFTER TRANSPOSING:")
         transpose()
 
-    augument[2][0] = (-1)*augument[2][0]
-    augument[2][1] = (-1)*augument[2][1]   
+    augument[2][0] = (-1) * augument[2][0]
+    augument[2][1] = (-1) * augument[2][1]
 
     store_data_in_table()
     print("CONSIDERING s, t >= 0 AS SLACK VARIABLES")
     print("\n\nSET OF EQUATIONS ARE:")
 
-    
-
     for i in range(3):
-        k = ['s','t','Z']
+        k = ["s", "t", "Z"]
         print(f"{augument[i][0]}x+{augument[i][1]}y+{k[i]}={augument[i][2]}")
 
+
 def store_data_in_table():
-    global array,augument
+    global array, augument
     for i in range(3):
         for k in range(3):
-            j = [1,2,6] 
-            array[i+1][j[k]] = augument[i][k]
+            j = [1, 2, 6]
+            array[i + 1][j[k]] = augument[i][k]
+
 
 import numpy as np
+
+
 def transpose():
     global augument
     augument = np.array(augument)  # Convert to a NumPy array
@@ -73,10 +81,10 @@ def transpose():
 
 def print_arugument():
     global augument
-    print("-"*18)
+    print("-" * 18)
     for row in augument:
         print(f"|{float(row[0]):<5} {float(row[1]):<5} : {float(row[2]):<5}|")
-    print("-"*18)
+    print("-" * 18)
 
 
 def edit_data():
@@ -151,9 +159,12 @@ def ratio(col):
             array[i + 1][6] / array[i + 1][col]
         ).limit_denominator(10)
 
+
 ans = ["", "", "", "", ""]
+
+
 def print_ans(command):
-    global array,ans
+    global array, ans
     check = [1, 2, 3]
     cnt = 0
     for i in range(5):
@@ -169,7 +180,6 @@ def print_ans(command):
             else:
                 ans[i] = 0
             cnt = 0
-
 
     print(f"\nx={ans[0]}\ny={ans[1]}\ns={ans[2]}\nt={ans[3]}\nZ Max={ans[4]}")
     if command == 0:
@@ -189,13 +199,13 @@ def main():
     while 1:
         try:
             choice = int(input("Solving For?\n1)MAXIMUM\n2)MINIMUM\n"))
-            if choice in [1,2]:
+            if choice in [1, 2]:
                 get_data(choice)
                 break
             else:
                 print("CHOOSE 1 OR 2")
                 continue
-            
+
         except ValueError:
             print("CHOOSE EITHER 1 OR 2")
             continue
@@ -210,8 +220,10 @@ def main():
         edit_data()
     solve_simplex_table()
     global ans
-    if choice==2:
-        print(f"\n\n__FINAL ANSWER__\n Z {'Min' if choice == 2 else ' Max'} = {ans[-1]} at {f'({ans[0]},{ans[1]})' if choice == 1 else f'({array[3][3]},{array[3][4]})'})")
+    if choice == 2:
+        print(
+            f"\n\n__FINAL ANSWER__\n Z {'Min' if choice == 2 else ' Max'} = {ans[-1]} at {f'({ans[0]},{ans[1]})' if choice == 1 else f'({array[3][3]},{array[3][4]})'})"
+        )
 
 
 if __name__ == "__main__":
