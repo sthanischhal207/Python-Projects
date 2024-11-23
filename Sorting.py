@@ -6,6 +6,7 @@ From = input("ENTER THE DIRECTORY YOU WANT TO SORT: ")
 os.chdir(From)
 
 # File extension categories 
+#Feel Free to Add more extension as you wish
 extensions = {
     "images": [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tiff", ".svg", ".webp"],
     "videos": [".mp4", ".avi", ".mkv", ".mov", ".wmv", ".flv", ".webm", ".mpeg"],
@@ -23,7 +24,7 @@ extensions = {
 
 # Define paths for sorted and excluded directories
 in_all = os.path.join(From, "__SORTED__")
-no_sort = os.path.join(From, "!NO SORTED!")
+no_sort = os.path.join(From, "!NO SORTED!") #create A Folder name "!NO SORTED!" where you can store things you dont want it oi be sorted
 
 # Create the output directory if it doesn't exist
 os.makedirs(in_all, exist_ok=True)
@@ -33,7 +34,7 @@ not_sort = [in_all, no_sort]
 
 # Walk through the source directory
 for dirpath, dirnames, filenames in os.walk(From):
-    # Skip directories in the not_sort list or their subdirectories
+    # Skip directories in the not_sort list 
     if any(dirpath.startswith(excluded) for excluded in not_sort):
         continue
 
