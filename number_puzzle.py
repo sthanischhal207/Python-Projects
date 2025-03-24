@@ -31,6 +31,12 @@ def replace_box(status, key, ROC):
     # Calculate the number of positions to move based on the key pressed
     num = (-ROC if key == 'W' else (ROC if key == 'S' else (-1 if key == 'A' else 1)))
     iteration = get_Blank_iteration(status)  # Find the index of the blank box ('')
+
+    #Restrict player to go further left or right from a row
+    for i in range(ROC):
+        if (ROC*(i+1)-1 == iteration and num == 1) or (ROC*(i+1) == iteration and num == -1):
+            print("\n----Invalid Choice----\n")
+            return "ERROR"
     
     # Check if the new position after moving is within bounds
     if 0 <= iteration + num <= len(status)-1:
