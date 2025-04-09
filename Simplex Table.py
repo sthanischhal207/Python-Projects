@@ -1,7 +1,7 @@
 """
 THINGS TO DO BEFORE RUNNING THE PROGRAM:
-1) Make eaure you have Python interpreter in yr PC, else Go to Microsoft Store and Download latest version of python.
-2) Run "pip install tabulate".
+1) Make sure you have Python interpreter in your PC, else Go to Microsoft Store and Download latest version of python.
+2) Run "pip install tabulate" in your terminal or command prompt.
 3} Similarly, Run "pip install fractions" and then "pip install numpy".
 4) Dowload this file and run the file.
 
