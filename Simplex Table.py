@@ -1,3 +1,13 @@
+"""
+THINGS TO DO BEFORE RUNNING THE PROGRAM:
+1) Make eaure you have Python interpreter in yr PC, else Go to Microsoft Store and Download latest version of python.
+2) Run "pip install tabulate".
+3} Similarly, Run "pip install fractions" and then "pip install numpy".
+4) Dowload this file and run the file.
+
+
+"""
+
 from tabulate import tabulate
 from fractions import Fraction
 import numpy as np
