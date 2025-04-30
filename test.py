@@ -2,7 +2,7 @@ import streamlit as st
 from fractions import Fraction
 import pandas as pd
 
-st.set_page_config(page_title="Simplex Solver", layout="centered")
+st.set_page_config(page_title="Simplex Solver (Only Max Case is working for Now)", layout="centered")
 st.title("Simplex Method Solver")
 
 with st.form("input_form"):
