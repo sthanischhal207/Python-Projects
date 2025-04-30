@@ -144,15 +144,17 @@ def main():
 
     with col1:
         a = st.number_input("a (x in eq1)", value=1.0)
-        d = st.number_input("d (x in eq2)", value=1.0)
-        g = st.number_input("g (x in Z)", value=1.0)
-    with col2:
         b = st.number_input("b (y in eq1)", value=1.0)
-        e = st.number_input("e (y in eq2)", value=1.0)
-        h = st.number_input("h (y in Z)", value=1.0)
-    with col3:
         c = st.number_input("c (RHS eq1)", value=1.0)
+    with col2:
+        d = st.number_input("d (x in eq2)", value=1.0)
+        e = st.number_input("e (y in eq2)", value=1.0)
         f = st.number_input("f (RHS eq2)", value=1.0)
+        
+    with col3:
+        g = st.number_input("g (x in Z)", value=1.0)
+        h = st.number_input("h (y in Z)", value=1.0)
+        
 
     if st.button("Solve"):
         user_inputs = [[a, b, c], [d, e, f], [g, h, 0]]
