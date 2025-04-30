@@ -17,18 +17,7 @@ st.markdown("---")
 
 # Input section
 with st.form("input_form"):
-    st.subheader("Enter Objective Function Coefficients \n **For Z = gx + hy**")
-
-    col_obj1, col_obj2 = st.columns(2)
-    with col_obj1:
-        g = st.number_input("g", value=1.0)
-    with col_obj2:
-        h = st.number_input("h", value=1.0)
-
-    objective = st.radio("Optimization Type:", ["Maximize", "Minimize"])
-
-    st.markdown("---")
-    st.subheader("Enter Constraints Coefficients")
+    st.subheader("Enter Coefficients")
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -41,6 +30,12 @@ with st.form("input_form"):
         d = st.number_input("d", value=1.0)
         e = st.number_input("e", value=1.0)
         f = st.number_input("RHS (f)", value=1.0)
+    with col3:
+        st.markdown("**Objective Function: Z = gx + hy**")
+        g = st.number_input("g", value=1.0)
+        h = st.number_input("h", value=1.0)
+
+    objective = st.radio("Optimization Type:", ["Maximize", "Minimize"])
 
     submitted = st.form_submit_button("Solve")
 
