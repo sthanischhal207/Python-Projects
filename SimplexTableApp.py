@@ -17,7 +17,7 @@ st.markdown("---")
 
 # Input section
 with st.form("input_form"):
-    st.subheader("Enter Objective Function Coefficients")
+    st.subheader("Enter Objective Function Coefficients \nZ = gx + hy.")
 
     col_obj1, col_obj2 = st.columns(2)
     with col_obj1:
