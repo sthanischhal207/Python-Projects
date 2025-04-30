@@ -17,145 +17,130 @@ if "objective_type" not in st.session_state:
 st.title("2-Variable Simplex Method Solver")
 st.markdown("---")
 
-# Input form
+# Input section
 with st.form("input_form"):
-    st.subheader("Enter Objective Function Coefficients (Z = gx + hy)")
+    st.subheader("Enter Objective Function Coefficients")
+
+    col_obj1, col_obj2 = st.columns(2)
+    with col_obj1:
+        g = st.number_input("g (coefficient of x in Z)", value=1.0)
+    with col_obj2:
+        h = st.number_input("h (coefficient of y in Z)", value=1.0)
+
+    objective = st.radio("Optimization Type:", ["Maximize", "Minimize"])
+    st.session_state.objective_type = objective
+
+    st.markdown("---")
+    st.subheader("Enter Constraints Coefficients")
+
     col1, col2 = st.columns(2)
     with col1:
-        g = st.number_input("g (coefficient of x)", value=1.0)
+        st.markdown("**Constraint 1: ax + by <= c**")
+        a = st.number_input("a", value=1.0)
+        b = st.number_input("b", value=1.0)
+        c = st.number_input("RHS (c)", value=1.0)
     with col2:
-        h = st.number_input("h (coefficient of y)", value=1.0)
-
-    objective = st.radio("Optimization Type", ["Maximize", "Minimize"])
-
-    st.subheader("Enter Constraint Coefficients")
-    st.markdown("### Constraint 1: ax + by ≤ c")
-    a = st.number_input("a", value=1.0, key="a")
-    b = st.number_input("b", value=1.0, key="b")
-    c_val = st.number_input("c", value=1.0, key="c")
-
-    st.markdown("### Constraint 2: dx + ey ≤ f")
-    d = st.number_input("d", value=1.0, key="d")
-    e = st.number_input("e", value=1.0, key="e")
-    f_val = st.number_input("f", value=1.0, key="f")
+        st.markdown("**Constraint 2: dx + ey <= f**")
+        d = st.number_input("d", value=1.0)
+        e = st.number_input("e", value=1.0)
+        f = st.number_input("RHS (f)", value=1.0)
 
     submitted = st.form_submit_button("Solve")
 
-# When the form is submitted
+# Logic after submitting
 if submitted:
-    # Store for later
-    st.session_state.objective_type = objective
-
-    # Convert all to Fraction for exact math
-    a, b, c_val = Fraction(a), Fraction(b), Fraction(c_val)
-    d, e, f_val = Fraction(d), Fraction(e), Fraction(f_val)
+    a, b, c = Fraction(a), Fraction(b), Fraction(c)
+    d, e, f = Fraction(d), Fraction(e), Fraction(f)
     g, h = Fraction(g), Fraction(h)
 
-    # Negate coefficients for maximization
-    if objective == "Maximize":
-        g *= -1
-        h *= -1
-
-    # Initialize the tableau
+    # Initial simplex tableau
     tableau = [
         ["Basis", "x", "y", "s1", "s2", "Z", "RHS", "Ratio"],
-        ["s1", a, b, 1, 0, 0, c_val, ""],
-        ["s2", d, e, 0, 1, 0, f_val, ""],
-        ["Z", g, h, 0, 0, 1, 0, ""]
+        ["s1", a, b, 1, 0, 0, c, ""],
+        ["s2", d, e, 0, 1, 0, f, ""],
+        ["Z", -g, -h, 0, 0, 1, 0, ""]
     ]
     st.session_state.tables = [tableau]
 
-    def calculate_ratios(tbl, pivot_col):
-        for i in [1, 2]:
+    def calculate_ratios(table, pivot_col):
+        for i in range(1, 3):
             try:
-                val = tbl[i][pivot_col]
-                if val > 0:
-                    tbl[i][7] = Fraction(tbl[i][6] / val).limit_denominator(10)
-                else:
-                    tbl[i][7] = "-"
+                rhs = table[i][6]
+                val = table[i][pivot_col]
+                table[i][7] = rhs / val if val > 0 else "-"
             except:
-                tbl[i][7] = "-"
+                table[i][7] = "-"
 
-    def find_pivot_column(tbl):
-        return min(range(1, 3), key=lambda i: tbl[3][i])
+    def find_pivot_column(table):
+        if st.session_state.objective_type == "Maximize":
+            return min(range(1, 3), key=lambda i: table[3][i])
+        else:
+            return max(range(1, 3), key=lambda i: table[3][i])
 
-    def find_pivot_row(tbl, pivot_col):
-        valid = [(i, tbl[i][7]) for i in [1, 2] if isinstance(tbl[i][7], Fraction)]
-        return min(valid, key=lambda x: x[1])[0] if valid else None
+    def find_pivot_row(table, pivot_col):
+        ratios = [(i, table[i][7]) for i in range(1, 3) if isinstance(table[i][7], Fraction) or isinstance(table[i][7], float)]
+        return min(ratios, key=lambda x: x[1])[0] if ratios else None
 
-    def pivot_operation(tbl, pivot_row, pivot_col):
-        pivot_val = tbl[pivot_row][pivot_col]
-        tbl[pivot_row][1:7] = [Fraction(x / pivot_val).limit_denominator(10) for x in tbl[pivot_row][1:7]]
-
-        for i in [1, 2, 3]:
+    def pivot_operation(table, pivot_row, pivot_col):
+        pivot_val = table[pivot_row][pivot_col]
+        table[pivot_row][1:7] = [x / pivot_val for x in table[pivot_row][1:7]]
+        for i in range(1, 4):
             if i != pivot_row:
-                factor = tbl[i][pivot_col]
-                tbl[i][1:7] = [
-                    Fraction(tbl[i][j] - factor * tbl[pivot_row][j]).limit_denominator(10)
-                    for j in range(1, 7)
+                factor = table[i][pivot_col]
+                table[i][1:7] = [
+                    table[i][j] - factor * table[pivot_row][j] for j in range(1, 7)
                 ]
-        tbl[pivot_row][0] = tbl[0][pivot_col]
+        table[pivot_row][0] = table[0][pivot_col]
 
-    # SIMPLEX LOOP
     while True:
         current = st.session_state.tables[-1]
-
-        if all(current[3][i] >= 0 for i in range(1, 3)):
-            break
+        if st.session_state.objective_type == "Maximize":
+            if all(current[3][i] >= 0 for i in range(1, 3)):
+                break
+        else:
+            if all(current[3][i] <= 0 for i in range(1, 3)):
+                break
 
         pivot_col = find_pivot_column(current)
         calculate_ratios(current, pivot_col)
         pivot_row = find_pivot_row(current, pivot_col)
-
         if pivot_row is None:
-            st.error("Unbounded solution. No valid pivot row found.")
+            st.error("Unbounded solution.")
             break
 
-        # Narrate pivot info
-        st.markdown(f"""
-        **Pivot Operation**
-        - Pivot Column: `{current[0][pivot_col]}`
-        - Pivot Row: `{pivot_row}`
-        - Pivot Element: `{current[pivot_row][pivot_col]}`
-        """)
-
-        # Clone the table and perform pivot
         new_table = [row[:] for row in current]
         pivot_operation(new_table, pivot_row, pivot_col)
-
         new_table[pivot_row][7] = ""
         for i in [1, 2]:
             if i != pivot_row:
                 new_table[i][7] = ""
-
         st.session_state.tables.append(new_table)
 
-    # Final output
+    # Final solution extraction
     final = st.session_state.tables[-1]
     variables = {"x": 0, "y": 0, "Z": 0}
-
     for row in final[1:4]:
-        var = row[0]
-        if var in variables:
-            variables[var] = row[6]
+        if row[0] in variables:
+            variables[row[0]] = row[6]
 
-    result_Z = variables["Z"]
-    if objective == "Minimize":
-        result_Z *= -1
+    final_z = variables["Z"]
+    if st.session_state.objective_type == "Minimize":
+        final_z *= -1
 
     st.session_state.final_output = f"""
-    ### __Final Optimal Solution__
-    - x = `{variables['x']}`
-    - y = `{variables['y']}`
-    - Z {objective} = `{result_Z}`
-    """
+**Optimal Solution:**  
+- x = {variables['x']}  
+- y = {variables['y']}  
+- Z = {final_z}  
+**Type:** {st.session_state.objective_type}
+"""
 
-# Display tables
+# Show all simplex tables
 for idx, table in enumerate(st.session_state.tables):
-    st.markdown(f"### Simplex Table {idx}")
+    st.subheader(f"Simplex Table {idx}")
     st.code(tabulate(table, tablefmt="fancy_grid"))
 
-# Final result
+# Show final answer
 if st.session_state.final_output:
     st.markdown("---")
     st.markdown(st.session_state.final_output)
