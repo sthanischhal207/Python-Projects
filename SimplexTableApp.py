@@ -141,16 +141,17 @@ def main():
 
     st.subheader("Enter coefficients for the following:")
     col1, col2, col3 = st.columns(3)
-
+    st.subheader("eqn1-> ax + by = c")
     with col1:
         a = st.number_input("a (x in eq1)", value=1.0)
         b = st.number_input("b (y in eq1)", value=1.0)
         c = st.number_input("c (RHS eq1)", value=1.0)
+    st.subheader("eqn2-> dx + ey = f")
     with col2:
         d = st.number_input("d (x in eq2)", value=1.0)
         e = st.number_input("e (y in eq2)", value=1.0)
         f = st.number_input("f (RHS eq2)", value=1.0)
-        
+    st.subheader("Z = gx + hy")    
     with col3:
         g = st.number_input("g (x in Z)", value=1.0)
         h = st.number_input("h (y in Z)", value=1.0)
