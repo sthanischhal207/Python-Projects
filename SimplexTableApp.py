@@ -21,9 +21,9 @@ with st.form("input_form"):
 
     col_obj1, col_obj2 = st.columns(2)
     with col_obj1:
-        g = st.number_input("g (x in Z)", value=1.0)
+        g = st.number_input("g", value=1.0)
     with col_obj2:
-        h = st.number_input("h (y in Z)", value=1.0)
+        h = st.number_input("h", value=1.0)
 
     objective = st.radio("Optimization Type:", ["Maximize", "Minimize"])
 
