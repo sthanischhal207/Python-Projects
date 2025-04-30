@@ -6,121 +6,121 @@ Configure page
 
 st.set_page_config(page_title="Simplex Solver", layout="centered")
 
-Session state for tables and logs
+Initialize session state
 
-if "tables" not in st.session_state: st.session_state.tables = [] if "logs" not in st.session_state: st.session_state.logs = [] if "final_output" not in st.session_state: st.session_state.final_output = ""
+if "tables" not in st.session_state: st.session_state.tables = [] if "logs" not in st.session_state: st.session_state.logs = [] if "final_vars" not in st.session_state: st.session_state.final_vars = {}
 
-st.title("2-Variable Simplex Method Solver") st.markdown("---")
+Title
 
-Input section
+st.title("🧮 2-Variable Simplex Method Solver") st.markdown("---")
 
-with st.form("input_form"): st.subheader("Enter Objective Function Coefficients") col_obj1, col_obj2 = st.columns(2) with col_obj1: g = st.number_input("g (coefficient of x)", value=1.0) with col_obj2: h = st.number_input("h (coefficient of y)", value=1.0) objective = st.radio("Optimization Type:", ["Maximize", "Minimize"]) st.markdown("---") st.subheader("Enter Constraints Coefficients") col1, col2 = st.columns(2) with col1: a = st.number_input("a (x in Eq1)", value=1.0) b = st.number_input("b (y in Eq1)", value=1.0) c = st.number_input("c (RHS Eq1)", value=1.0) with col2: d = st.number_input("d (x in Eq2)", value=1.0) e = st.number_input("e (y in Eq2)", value=1.0) f = st.number_input("f (RHS Eq2)", value=1.0) submitted = st.form_submit_button("Solve")
+Input form
 
-if submitted: # Convert to fractions a, b, c = Fraction(a), Fraction(b), Fraction(c) d, e, f = Fraction(d), Fraction(e), Fraction(f) g, h = Fraction(g), Fraction(h)
+with st.form("input_form"): st.subheader("Enter Objective Function Coefficients") g = st.number_input("g (coeff of x in Z)", value=1.0) h = st.number_input("h (coeff of y in Z)", value=1.0) objective = st.radio("Optimization Type:", ["Maximize", "Minimize"])
 
-# Indicate chosen optimization
-if objective == "Maximize":
-    g, h = -g, -h
-    st.write("**Maximization chosen; negated objective coefficients for tableau.**")
-else:
-    st.write("**Minimization chosen; objective coefficients unchanged.**")
+st.markdown("---")
+st.subheader("Enter Constraint Coefficients")
+a = st.number_input("a (coeff of x in eq1)", value=1.0)
+b = st.number_input("b (coeff of y in eq1)", value=1.0)
+c = st.number_input("c (RHS of eq1)", value=1.0)
+d = st.number_input("d (coeff of x in eq2)", value=1.0)
+e = st.number_input("e (coeff of y in eq2)", value=1.0)
+f = st.number_input("f (RHS of eq2)", value=1.0)
+
+submitted = st.form_submit_button("Solve")
+
+Helper functions
+
+def to_fraction_matrix(a, b, c, d, e, f, g, h, objective): # Convert inputs to Fraction A, B, C = Fraction(a), Fraction(b), Fraction(c) D, E, F = Fraction(d), Fraction(e), Fraction(f) G, H = Fraction(g), Fraction(h) # Negate for maximization if objective == "Maximize": G, H = -G, -H
 
 # Build initial tableau
-headers = ["Basis", "x", "y", "s1", "s2", "Z", "RHS", "Ratio"]
-initial = [
-    headers,
-    ["s1", a, b, 1, 0, 0, c, ""],
-    ["s2", d, e, 0, 1, 0, f, ""],
-    ["Z", g, h, 0, 0, 1, 0, ""]
+return [
+    ["Basis", "x", "y", "s1", "s2", "Z", "RHS", "Ratio"],
+    ["s1", A,   B,    1,    0,    0,   C,     ""],
+    ["s2", D,   E,    0,    1,    0,   F,     ""],
+    ["Z",  G,   H,    0,    0,    1,   0,     ""],
 ]
-st.session_state.tables = [initial]
-st.session_state.logs = []
 
-# Helper functions
-def print_table(table, idx):
-    st.subheader(f"Simplex Table {idx}")
-    st.code(tabulate(table, tablefmt="fancy_grid"))
+def calculate_ratios(table, pivot_col): logs = [] for i in [1, 2]: coeff = table[i][pivot_col] if coeff > 0: table[i][7] = table[i][6] / coeff logs.append( f"Row {i}: ratio = {table[i][6]} / {coeff} = {table[i][7]}" ) else: table[i][7] = None logs.append( f"Row {i}: pivot column value <= 0, ratio skipped." ) return logs
 
-def calculate_ratios(table, pivot_col):
-    for i in (1, 2):
-        val = table[i][pivot_col]
-        rhs = table[i][6]
-        table[i][7] = rhs / val if val > 0 else "-"
+def find_pivot_column(table): # Most negative entry in Z-row among x and y return min(range(1, 3), key=lambda j: table[3][j])
 
-def find_pivot_column(table):
-    vals = table[3][1:3]
-    if objective == "Maximize":
-        pivot_val = min(vals)
-    else:
-        pivot_val = max(vals)
-    return table[3].index(pivot_val)
+def find_pivot_row(table, pivot_col): candidates = [(i, table[i][7]) for i in [1, 2] if table[i][7] is not None] if not candidates: return None return min(candidates, key=lambda x: x[1])[0]
 
-def find_pivot_row(table, pivot_col):
-    ratios = [(i, table[i][7]) for i in (1, 2) if isinstance(table[i][7], Fraction)]
-    return min(ratios, key=lambda x: x[1])[0] if ratios else None
+def pivot_operation(table, pivot_row, pivot_col): logs = [] # Normalize pivot row pivot_val = table[pivot_row][pivot_col] logs.append(f"Normalizing pivot at (Row {pivot_row}, Col {pivot_col}) = {pivot_val}") table[pivot_row][1:7] = [val / pivot_val for val in table[pivot_row][1:7]] logs.append(f"Row {pivot_row} after normalization: {table[pivot_row][1:7]}")
 
-def pivot_operation(table, pivot_row, pivot_col):
-    pivot_val = table[pivot_row][pivot_col]
-    # Normalize pivot row
-    table[pivot_row][1:7] = [x / pivot_val for x in table[pivot_row][1:7]]
-    table[pivot_row][0] = table[0][pivot_col]
-    # Eliminate other rows
-    for i in (1, 2, 3):
-        if i != pivot_row:
-            factor = table[i][pivot_col]
-            table[i][1:7] = [table[i][j] - factor * table[pivot_row][j] for j in range(1, 7)]
+# Eliminate other rows
+for r in [1, 2, 3]:
+    if r != pivot_row:
+        factor = table[r][pivot_col]
+        logs.append(f"Eliminating row {r}, factor = {factor}")
+        new_vals = []
+        for j in range(1, 7):
+            new_vals.append(
+                table[r][j] - factor * table[pivot_row][j]
+            )
+        table[r][1:7] = new_vals
+        logs.append(f"Row {r} after elimination: {new_vals}")
 
-# Iteration loop
+# Update basis label
+table[pivot_row][0] = table[0][pivot_col]
+return logs
+
+def is_optimal(table): return all(val >= 0 for val in table[3][1:3])
+
+def extract_solution(table, objective): sol = {"x": 0, "y": 0} for row in table[1:3]: var = row[0] if var in sol: sol[var] = row[6] Z_val = table[3][6] if objective == "Minimize": Z_val = -Z_val sol['Z'] = Z_val return sol
+
+Main execution
+
+if submitted: # Reset state st.session_state.tables = [] st.session_state.logs = [] st.session_state.final_vars = {}
+
+# Create initial tableau
+table = to_fraction_matrix(a, b, c, d, e, f, g, h, objective)
+st.session_state.tables.append([row[:] for row in table])
+st.session_state.logs.append("**Initial Tableau**")
+
+# Iterations
 iteration = 0
-while True:
-    current = st.session_state.tables[-1]
+while not is_optimal(table):
     iteration += 1
-    print_table(current, iteration - 1)
-    test_vals = current[3][1:3]
+    st.session_state.logs.append(f"--- Iteration {iteration} ---")
 
-    # Check optimality
-    if objective == "Maximize" and all(v >= 0 for v in test_vals):
-        st.success("Optimal solution reached for maximization!")
+    pivot_col = find_pivot_column(table)
+    st.session_state.logs.append(
+        f"Pivot column: {pivot_col} ({table[0][pivot_col]})"
+    )
+
+    ratio_logs = calculate_ratios(table, pivot_col)
+    st.session_state.logs.extend(ratio_logs)
+
+    pivot_row = find_pivot_row(table, pivot_col)
+    if pivot_row is None:
+        st.session_state.logs.append(
+            "Solution unbounded: no valid pivot row found."
+        )
         break
-    if objective == "Minimize" and all(v <= 0 for v in test_vals):
-        st.success("Optimal solution reached for minimization!")
-        break
+    st.session_state.logs.append(f"Pivot row: {pivot_row}")
 
-    # Pivot selection
-    p_col = find_pivot_column(current)
-    calculate_ratios(current, p_col)
-    p_row = find_pivot_row(current, p_col)
-    if p_row is None:
-        st.error("Unbounded solution detected.")
-        break
+    op_logs = pivot_operation(table, pivot_row, pivot_col)
+    st.session_state.logs.extend(op_logs)
+    st.session_state.tables.append([row[:] for row in table])
 
-    # Log pivot info
-    st.write(f":arrow_right: Pivot Column: C{p_col}  |  Pivot Row: R{p_row}  |  Element = {current[p_row][p_col]}")
+# Final solution
+sol = extract_solution(table, objective)
+st.session_state.final_vars = sol
+st.session_state.logs.append("**Optimal Solution Found**")
+for k, v in sol.items():
+    st.session_state.logs.append(f"{k} = {v}")
 
-    # Perform pivot
-    new_tab = [row.copy() for row in current]
-    pivot_operation(new_tab, p_row, p_col)
-    new_tab[p_row][7] = ""
-    for i in (1, 2):
-        if i != p_row:
-            new_tab[i][7] = ""
-    st.session_state.tables.append(new_tab)
+Display trace
 
-# Final display and solution
-final = st.session_state.tables[-1]
-print_table(final, iteration)
+if st.session_state.logs: st.markdown("## Solver Trace") for entry in st.session_state.logs: st.write(entry)
 
-# Extract solution
-sol = {"x": 0, "y": 0, "Z": 0}
-for row in final[1:4]:
-    var = row[0]
-    if var in sol:
-        sol[var] = row[6]
-z_val = sol["Z"]
-if objective == "Minimize":
-    z_val = -z_val
-st.markdown("---")
-st.markdown(
-    f"**Optimal Solution:**  \n- x = {sol['x']}  \n- y = {sol['y']}  \n- Z = {z_val}  \n**Type:** {objective}"
-)
+Display tableaus
+
+if st.session_state.tables: st.markdown("---") for idx, tbl in enumerate(st.session_state.tables): st.subheader(f"Tableau {idx}") st.code(tabulate(tbl, tablefmt="fancy_grid"))
+
+Display final result
+
+if st.session_state.final_vars: st.markdown("---") st.subheader("🎉 Final Result") st.write(f"x = {st.session_state.final_vars['x']}") st.write(f"y = {st.session_state.final_vars['y']}") st.write(f"Z = {st.session_state.final_vars['Z']}")
 
