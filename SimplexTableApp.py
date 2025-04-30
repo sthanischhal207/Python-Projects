@@ -1,4 +1,7 @@
-import streamlit as st from tabulate import tabulate from fractions import Fraction import numpy as np
+import streamlit as st
+from tabulate import tabulate
+from fractions import Fraction
+import numpy as np
 
 st.set_page_config(page_title="Simplex Solver", layout="centered")
 
