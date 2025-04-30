@@ -12,7 +12,7 @@ if "tables" not in st.session_state:
 if "final_output" not in st.session_state:
     st.session_state.final_output = ""
 
-st.title("2-Variable Simplex Method Solver")
+st.title("2-Variable Simplex Method Solver (Only MAX Case is working for now)")
 st.markdown("---")
 
 # Input section
