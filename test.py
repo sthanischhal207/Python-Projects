@@ -3,35 +3,44 @@ from fractions import Fraction
 import pandas as pd
 
 st.set_page_config(page_title="Simplex Solver", layout="centered")
-
 st.title("Simplex Method Solver")
 
-# Input section
-st.subheader("Step 1: Enter the coefficients")
+with st.form("input_form"):
+    st.subheader("Objective Function")
+    st.latex("Z = gx + hy")
 
-choice = st.radio("Problem Type", ["Maximization", "Minimization"])
+    col_obj1, col_obj2 = st.columns(2)
+    with col_obj1:
+        g = st.number_input("g (coefficient of x in Z)", value=5.0)
+    with col_obj2:
+        h = st.number_input("h (coefficient of y in Z)", value=4.0)
 
-col1, col2 = st.columns(2)
+    objective = st.radio("Optimization Type", ["Maximization", "Minimization"])
+    st.markdown("---")
 
-with col1:
-    a = st.number_input("a (in ax + by ≤ c)", value=1.0, key="a")
-    b = st.number_input("b (in ax + by ≤ c)", value=1.0, key="b")
-    c = st.number_input("c (RHS of 1st constraint)", value=100.0, key="c")
+    st.subheader("Constraints")
 
-with col2:
-    d = st.number_input("d (in dx + ey ≤ f)", value=1.0, key="d")
-    e = st.number_input("e (in dx + ey ≤ f)", value=1.0, key="e")
-    f = st.number_input("f (RHS of 2nd constraint)", value=150.0, key="f")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**Equation 1: ax + by = c**")
+        a = st.number_input("a (coefficient of x)", value=1.0)
+        b = st.number_input("b (coefficient of y)", value=1.0)
+        c = st.number_input("RHS (c)", value=100.0)
 
-g = st.number_input("g (coefficient of x in objective)", value=5.0, key="g")
-h = st.number_input("h (coefficient of y in objective)", value=4.0, key="h")
+    with col2:
+        st.markdown("**Equation 2: dx + ey = f**")
+        d = st.number_input("d (coefficient of x)", value=1.0)
+        e = st.number_input("e (coefficient of y)", value=1.0)
+        f = st.number_input("RHS (f)", value=150.0)
 
-if st.button("Solve"):
-    # Step 1: Initialize simplex table
+    submitted = st.form_submit_button("Solve")
+
+if submitted:
     augument = [
         [Fraction(a), Fraction(b), Fraction(c)],
         [Fraction(d), Fraction(e), Fraction(f)],
-        [Fraction(-g if choice == "Maximization" else g), Fraction(-h if choice == "Maximization" else h), 0],
+        [Fraction(-g if objective == "Maximization" else g),
+         Fraction(-h if objective == "Maximization" else h), 0],
     ]
 
     array = [
@@ -47,13 +56,7 @@ if st.button("Solve"):
         st.dataframe(df, use_container_width=True)
 
     def print_data(r, c):
-        st.markdown(
-            f"""
-            **Pivot Column:** C{c}  
-            **Departing Row:** R{r}  
-            **Entering Element:** C{c} R{r} = {array[r][c]}
-            """
-        )
+        st.markdown(f"**Pivot Column:** C{c}  \n**Departing Row:** R{r}  \n**Entering Element:** C{c} R{r} = {array[r][c]}")
 
     def solving(r, col):
         if array[r][col] != 1:
@@ -94,13 +97,11 @@ if st.button("Solve"):
                     ans[i] = 0
                 cnt = 0
         st.markdown(
-            f"""
-            **x = {ans[0]}**  
-            **y = {ans[1]}**  
-            **s = {ans[2]}**  
-            **t = {ans[3]}**  
-            **Z {'Min' if choice == 'Minimization' else 'Max'} = {ans[4]}**
-            """
+            f"**x = {ans[0]}**  \n"
+            f"**y = {ans[1]}**  \n"
+            f"**s = {ans[2]}**  \n"
+            f"**t = {ans[3]}**  \n"
+            f"**Z {'Min' if objective == 'Minimization' else 'Max'} = {ans[4]}**"
         )
         if command == 0:
             st.warning("It is not an optimal solution as it contains negative values in row 3.")
