@@ -1,137 +1,131 @@
 import streamlit as st
-from tabulate import tabulate
 from fractions import Fraction
+import pandas as pd
 
-st.set_page_config(page_title="Simplex Solver", layout="centered")
+st.set_page_config(page_title="Simplex Solver ", layout="centered")
+st.title("Simplex Method Solver\n**Note: Only Max Case is working for Now**")
 
-# Initialize session state
-if "step" not in st.session_state:
-    st.session_state.step = 0
-if "tables" not in st.session_state:
-    st.session_state.tables = []
-if "final_output" not in st.session_state:
-    st.session_state.final_output = ""
-
-st.title("2-Variable Simplex Method Solver (Only MAX Case is working for now)")
-st.markdown("---")
-
-# Input section
 with st.form("input_form"):
-    st.subheader("Enter Objective Function Coefficients")
+    st.subheader("Objective Function")
+    st.latex("Z = gx + hy")
 
     col_obj1, col_obj2 = st.columns(2)
     with col_obj1:
-        g = st.number_input("g (x in Z)", value=1.0)
+        g = st.number_input("g (coefficient of x in Z)", value=5.0)
     with col_obj2:
-        h = st.number_input("h (y in Z)", value=1.0)
+        h = st.number_input("h (coefficient of y in Z)", value=4.0)
 
-    objective = st.radio("Optimization Type:", ["Maximize", "Minimize"])
-
+    objective = st.radio("Optimization Type", ["Maximization", "Minimization"])
     st.markdown("---")
-    st.subheader("Enter Constraints Coefficients")
 
-    col1, col2, col3 = st.columns(3)
+    st.subheader("Constraints")
+
+    col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Equation 1: ax + by = c**")
-        a = st.number_input("a", value=1.0)
-        b = st.number_input("b", value=1.0)
-        c = st.number_input("RHS (c)", value=1.0)
+        a = st.number_input("a (coefficient of x)", value=1.0)
+        b = st.number_input("b (coefficient of y)", value=1.0)
+        c = st.number_input("RHS (c)", value=100.0)
+
     with col2:
         st.markdown("**Equation 2: dx + ey = f**")
-        d = st.number_input("d", value=1.0)
-        e = st.number_input("e", value=1.0)
-        f = st.number_input("RHS (f)", value=1.0)
+        d = st.number_input("d (coefficient of x)", value=1.0)
+        e = st.number_input("e (coefficient of y)", value=1.0)
+        f = st.number_input("RHS (f)", value=150.0)
 
     submitted = st.form_submit_button("Solve")
 
-# Logic after submitting
 if submitted:
-    # Convert to fractions for accuracy
-    a, b, c = Fraction(a), Fraction(b), Fraction(c)
-    d, e, f = Fraction(d), Fraction(e), Fraction(f)
-    g, h = Fraction(g), Fraction(h)
-
-    # Negate for maximization
-    if objective == "Maximize":
-        g, h = -g, -h
-
-    # Initial simplex tableau
-    tableau = [
-        ["Basis", "x", "y", "s1", "s2", "Z", "RHS", "Ratio"],
-        ["s1", a, b, 1, 0, 0, c, ""],
-        ["s2", d, e, 0, 1, 0, f, ""],
-        ["Z", g, h, 0, 0, 1, 0, ""]
+    augument = [
+        [Fraction(a), Fraction(b), Fraction(c)],
+        [Fraction(d), Fraction(e), Fraction(f)],
+        [Fraction(-g if objective == "Maximization" else g),
+         Fraction(-h if objective == "Maximization" else h), 0],
     ]
-    st.session_state.tables = [tableau]
 
-    # --- SIMPLEX METHOD LOOP ---
-    def calculate_ratios(table, pivot_col):
-        for i in range(1, 3):
-            try:
-                rhs = table[i][6]
-                val = table[i][pivot_col]
-                table[i][7] = rhs / val if val > 0 else "-"
-            except:
-                table[i][7] = "-"
+    array = [
+        ["Basis", "x(C1)", "y(C2)", "s(C3)", "t(C4)", "Z(C5)", "RHS(C6)", "Ratio"],
+        ["s(R1)", augument[0][0], augument[0][1], 1, 0, 0, augument[0][2], ""],
+        ["t(R2)", augument[1][0], augument[1][1], 0, 1, 0, augument[1][2], ""],
+        ["Z(R3)", augument[2][0], augument[2][1], 0, 0, 1, augument[2][2], ""],
+    ]
+    ans = ["", "", "", "", ""]
 
-    def find_pivot_column(table):
-        return min(range(1, 3), key=lambda i: table[3][i])
+    def print_array():
+        df = pd.DataFrame(array[1:], columns=array[0])
+        st.dataframe(df, use_container_width=True)
 
-    def find_pivot_row(table, pivot_col):
-        ratios = [(i, table[i][7]) for i in range(1, 3) if isinstance(table[i][7], Fraction)]
-        return min(ratios, key=lambda x: x[1])[0] if ratios else None
+    def print_data(r, c):
+        st.markdown(f"**Pivot Column:** C{c}  \n**Departing Row:** R{r}  \n**Entering Element:** C{c} R{r} = {array[r][c]}")
 
-    def pivot_operation(table, pivot_row, pivot_col):
-        pivot_val = table[pivot_row][pivot_col]
-        table[pivot_row][1:7] = [x / pivot_val for x in table[pivot_row][1:7]]
-        for i in range(1, 4):
-            if i != pivot_row:
-                factor = table[i][pivot_col]
-                table[i][1:7] = [
-                    table[i][j] - factor * table[pivot_row][j] for j in range(1, 7)
-                ]
-        table[pivot_row][0] = table[0][pivot_col]
+    def solving(r, col):
+        if array[r][col] != 1:
+            factor = Fraction(1 / array[r][col]).limit_denominator(10)
+            st.code(f"R{r} → R{r} × ({factor})")
+            divide = array[r][col]
+            for i in range(6):
+                array[r][i + 1] = Fraction(array[r][i + 1] / divide).limit_denominator(10)
 
-    while True:
-        current = st.session_state.tables[-1]
-        if all(val >= 0 for val in current[3][1:3]):
-            break
-        pivot_col = find_pivot_column(current)
-        calculate_ratios(current, pivot_col)
-        pivot_row = find_pivot_row(current, pivot_col)
-        if pivot_row is None:
-            st.error("Unbounded solution.")
-            break
-        new_table = [row[:] for row in current]
-        pivot_operation(new_table, pivot_row, pivot_col)
-        new_table[pivot_row][7] = ""
-        for i in [1, 2]:
-            if i != pivot_row:
-                new_table[i][7] = ""
-        st.session_state.tables.append(new_table)
+        for i in range(3):
+            if i + 1 != r:
+                divide_by = array[i + 1][col] / array[r][col]
+                factor = Fraction(divide_by).limit_denominator(10)
+                st.code(f"R{i+1} → R{i+1} - R{r} × ({factor})")
+                for j in range(6):
+                    array[i + 1][j + 1] = Fraction(
+                        array[i + 1][j + 1] - (array[r][j + 1] * divide_by)
+                    ).limit_denominator(10)
 
-    # --- FINAL OUTPUT ---
-    final = st.session_state.tables[-1]
-    variables = {"x": 0, "y": 0, "Z": 0}
-    for row in final[1:4]:
-        if row[0] in variables:
-            variables[row[0]] = row[6]
+    def ratio(col):
+        for i in range(2):
+            array[i + 1][7] = Fraction(array[i + 1][6] / array[i + 1][col]).limit_denominator(10)
 
-    st.session_state.final_output = f"""
-    ### Optimal Solution:
+    def print_ans(command):
+        cnt = 0
+        for i in range(5):
+            for j in range(3):
+                if array[j + 1][i + 1] == 1:
+                    for k in [1, 2, 3]:
+                        if array[k][i + 1] == 0:
+                            cnt += 1
+                    if cnt == 2:
+                        ans[i] = array[j + 1][6]
+                        cnt = 0
+                        break
+                    ans[i] = 0
+                else:
+                    ans[i] = 0
+                cnt = 0
+        st.markdown(
+            f"**x = {ans[0]}**  \n"
+            f"**y = {ans[1]}**  \n"
+            f"**s = {ans[2]}**  \n"
+            f"**t = {ans[3]}**  \n"
+            f"**Z {'Min' if objective == 'Minimization' else 'Max'} = {ans[4]}**"
+        )
+        if command == 0:
+            st.warning("It is not an optimal solution as it contains negative values in row 3.")
+        else:
+            st.success("It is an optimal solution.")
 
-    **x =** {variables['x']}  
-    **y =** {variables['y']}  
-    **Z =** {variables['Z'] if objective == "Maximize" else -variables['Z']}  
-    **Type:** {objective}
-    """
+    def solve_simplex_table():
+        column = 0
+        row = 0
+        iteration = 0
+        while array[3][1] < 0 or array[3][2] < 0:
+            column = 1 if array[3][1] < array[3][2] else 2
+            ratio(column)
+            iteration += 1
+            st.subheader(f"Simplex Table {iteration}")
+            print_array()
+            print_ans(0)
+            row = 1 if array[1][7] < array[2][7] else 2
+            print_data(row, column)
+            solving(row, column)
+        for i in range(2):
+            array[i + 1][7] = ""
+        st.subheader("Final Table")
+        print_array()
+        print_ans(1)
 
-# Display all simplex tables
-for idx, table in enumerate(st.session_state.tables):
-    st.subheader(f"Simplex Table {idx}")
-    st.code(tabulate(table, tablefmt="fancy_grid"))
-
-# Final result
-if st.session_state.final_output:
-    st.markdown("---")
-    st.markdown(st.session_state.final_output)
+    solve_simplex_table()
