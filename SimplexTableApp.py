@@ -3,7 +3,8 @@ from fractions import Fraction
 import pandas as pd
 
 st.set_page_config(page_title="Simplex Solver ", layout="centered")
-st.title("Simplex Method Solver[Note: Only Max Case is working for Now]")
+st.title("Simplex Method Solver     
+[Note: Only Max Case is working for Now]")
 
 with st.form("input_form"):
     st.subheader("Objective Function")
