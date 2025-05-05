@@ -2,3 +2,4 @@ streamlit
 tabulate
 numpy
 pandas
+fractions
