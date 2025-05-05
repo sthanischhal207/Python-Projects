@@ -96,11 +96,8 @@ def print_ans(command, choice):
         if ans[i] == "":
             ans[i] = 0
 
-    # For minimization case, handle differently
+    # Modify output for minimization case
     if choice == 2:
-        # For minimization, we need the values from Z row for x and y
-        min_x = array[3][3]  # Value in Z row, s column
-        min_y = array[3][4]  # Value in Z row, t column
         solution_text = f"""
         **x = {ans[0]}**  
         **y = {ans[1]}**  
@@ -126,7 +123,7 @@ def print_ans(command, choice):
         
         # Final answer display
         if choice == 2:  # Minimization case
-            final_text = f"**FINAL ANSWER:**  \nZ Min = {ans[4]} at ({array[3][3]}, {array[3][4]})"
+            final_text = f"**FINAL ANSWER:**  \nZ Min = {ans[4]} at ({ans[2]}, {ans[3]})  //Value of (s,t)"
         else:  # Maximization case
             final_text = f"**FINAL ANSWER:**  \nZ Max = {ans[4]} at ({ans[0]}, {ans[1]})"
         
