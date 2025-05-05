@@ -96,23 +96,13 @@ def print_ans(command, choice):
         if ans[i] == "":
             ans[i] = 0
 
-    # Modify output for minimization case
-    if choice == 2:
-        solution_text = f"""
-        **x = {ans[0]}**  
-        **y = {ans[1]}**  
-        **s = {ans[2]}**  
-        **t = {ans[3]}**  
-        **P Max = {ans[4]}**
-        """
-    else:
-        solution_text = f"""
-        **x = {ans[0]}**  
-        **y = {ans[1]}**  
-        **s = {ans[2]}**  
-        **t = {ans[3]}**  
-        **Z Max = {ans[4]}**
-        """
+    solution_text = f"""
+    **x = {ans[0]}**  
+    **y = {ans[1]}**  
+    **s = {ans[2]}**  
+    **t = {ans[3]}**  
+    **Z {'Min' if choice == 2 else 'Max'} = {ans[4]}**
+    """
     
     if command == 0:
         st.markdown(solution_text)
@@ -123,7 +113,7 @@ def print_ans(command, choice):
         
         # Final answer display
         if choice == 2:  # Minimization case
-            final_text = f"**FINAL ANSWER:**  \nZ Min = {ans[4]} at ({ans[2]}, {ans[3]})  //Value of (s,t)"
+            final_text = f"**FINAL ANSWER:**  \nZ Min = {ans[4]} at ({ans[0]}, {ans[1]})"
         else:  # Maximization case
             final_text = f"**FINAL ANSWER:**  \nZ Max = {ans[4]} at ({ans[0]}, {ans[1]})"
         
