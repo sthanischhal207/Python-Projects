@@ -19,7 +19,7 @@ augument = [
     ["d", "e", "f"],
     ["g", "h", 0],
 ]
-ans = ["", "", "", "", ""]
+ans = [0, 0, 0, 0, 0]  # [x, y, s, t, Z]
 
 def print_array():
     """Function to display the simplex table in a formatted dataframe."""
@@ -79,30 +79,28 @@ def find_basic_variables():
     # Initialize solution vector
     solution = [0, 0, 0, 0, 0]  # [x, y, s, t, Z]
     
-    # Check each column (x, y, s, t, Z)
-    for col in range(1, 6):  # Columns C1 to C5
-        # For each column, find if it's a basic variable
-        is_basic = False
-        basic_row = -1
-        
-        # A column is basic if it has exactly one 1 and all other entries are 0
-        for row in range(1, 4):  # Rows R1, R2, R3
-            if array[row][col] == 1:
-                # Found a potential basic variable
-                is_unit_column = True
-                for other_row in range(1, 4):
-                    if other_row != row and array[other_row][col] != 0:
-                        is_unit_column = False
-                        break
+    # Each row corresponds to a basic variable
+    # We need to find which column has exactly one 1 and zeros elsewhere
+    for col in range(1, 6):  # Columns 1-5 (x, y, s, t, Z)
+        for row in range(1, 4):  # Rows 1-3
+            # Check if this column has exactly one 1 at this row and 0s elsewhere
+            is_unit_column = True
+            
+            # First verify this position has a 1
+            if array[row][col] != 1:
+                continue
                 
-                if is_unit_column:
-                    is_basic = True
-                    basic_row = row
+            # Then check all other positions in this column are 0
+            for other_row in range(1, 4):
+                if other_row != row and array[other_row][col] != 0:
+                    is_unit_column = False
                     break
-        
-        # If this column is a basic variable, get its value from RHS
-        if is_basic:
-            solution[col-1] = array[basic_row][6]
+                    
+            if is_unit_column:
+                # We found a basic variable
+                # The value is the RHS of that row
+                solution[col-1] = array[row][6]
+                break
     
     return solution
 
@@ -112,45 +110,59 @@ def print_ans(command, choice):
     
     # Find basic variables and their values
     solution = find_basic_variables()
-    
-    # Update the ans global variable
     ans = solution
     
-    # For minimization, the final solution values come from different places
-    if choice == 2 and command == 1:
-        # For minimization final solution, x and y values are from Z row
-        x_val = array[3][3]
-        y_val = array[3][4]
-        z_val = ans[4]  # Z value is still from the basic variables
+    # For minimization case, y value is in the second row RHS column (index 6)
+    # and we need to check the correct column identification
+    if choice == 2 and command == 1:  # Final minimization solution
+        # For the minimization final solution, get y value specifically from row 2
+        # Get value where y is a basic variable
+        y_value = 0
+        for row in range(1, 4):
+            if array[row][2] == 1:  # Check if y column (C2) has a 1 in this row
+                is_unit_column = True
+                for other_row in range(1, 4):
+                    if other_row != row and array[other_row][2] != 0:
+                        is_unit_column = False
+                        break
+                if is_unit_column:
+                    y_value = array[row][6]
+                    break
         
+        # Display solution
         solution_text = f"""
-        **x = {x_val}**  
-        **y = {y_val}**  
+        **x = {ans[0]}**  
+        **y = {y_value}**  
         **s = {ans[2]}**  
         **t = {ans[3]}**  
-        **Z Min = {z_val}**
+        **Z Min = {ans[4]}**
         """
-        
-        final_text = f"**FINAL ANSWER:**  \nZ Min = {z_val} at ({x_val}, {y_val})"
+        st.markdown(solution_text)
+        st.success("It is an optimal solution.")
+        final_text = f"**FINAL ANSWER:**  \nZ Min = {ans[4]} at ({ans[0]}, {y_value})"
+        st.markdown(final_text)
     else:
-        # For maximization or intermediate solutions
+        # Format for display for maximization or intermediate solution
+        z_label = "Max" if choice == 1 else "Min"
         solution_text = f"""
         **x = {ans[0]}**  
         **y = {ans[1]}**  
         **s = {ans[2]}**  
         **t = {ans[3]}**  
-        **Z {'Max' if choice == 1 else 'Min'} = {ans[4]}**
+        **Z {z_label} = {ans[4]}**
         """
         
-        final_text = f"**FINAL ANSWER:**  \nZ {'Max' if choice == 1 else 'Min'} = {ans[4]} at ({ans[0]}, {ans[1]})"
-
-    if command == 0:
-        st.markdown(solution_text)
-        st.warning("It is not an optimal solution as it contains negative values in row 3.")
-    else:
-        st.markdown(solution_text)
-        st.success("It is an optimal solution.")
-        st.markdown(final_text)
+        if command == 0:
+            st.markdown(solution_text)
+            st.warning("It is not an optimal solution as it contains negative values in row 3.")
+        else:
+            st.markdown(solution_text)
+            st.success("It is an optimal solution.")
+            
+            # Final answer display
+            if choice == 1:  # Maximization case
+                final_text = f"**FINAL ANSWER:**  \nZ Max = {ans[4]} at ({ans[0]}, {ans[1]})"
+                st.markdown(final_text)
 
 def transpose_augument():
     """Function to transpose the augmented matrix."""
@@ -265,7 +277,7 @@ if submitted:
         ["t(R2)", "", "", 0, 1, 0, "", ""],
         ["Z(R3)", "", "", 0, 0, 1, "", ""],
     ]
-    ans = ["", "", "", "", ""]
+    ans = [0, 0, 0, 0, 0]
 
     # Set up augmented matrix
     augument = [
