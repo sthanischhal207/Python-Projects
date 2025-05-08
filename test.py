@@ -74,44 +74,58 @@ def ratio(col):
         else:
             array[i + 1][7] = float('inf')  # Set to infinity if coefficient is negative or zero
 
+def find_basic_variables():
+    """Function to identify basic variables in the current tableau."""
+    # Initialize solution vector
+    solution = [0, 0, 0, 0, 0]  # [x, y, s, t, Z]
+    
+    # Check each column (x, y, s, t, Z)
+    for col in range(1, 6):  # Columns C1 to C5
+        # For each column, find if it's a basic variable
+        is_basic = False
+        basic_row = -1
+        
+        # A column is basic if it has exactly one 1 and all other entries are 0
+        for row in range(1, 4):  # Rows R1, R2, R3
+            if array[row][col] == 1:
+                # Found a potential basic variable
+                is_unit_column = True
+                for other_row in range(1, 4):
+                    if other_row != row and array[other_row][col] != 0:
+                        is_unit_column = False
+                        break
+                
+                if is_unit_column:
+                    is_basic = True
+                    basic_row = row
+                    break
+        
+        # If this column is a basic variable, get its value from RHS
+        if is_basic:
+            solution[col-1] = array[basic_row][6]
+    
+    return solution
+
 def print_ans(command, choice):
     """Function to extract and display the current solution from the simplex table."""
     global ans
-    cnt = 0
     
-    # Reset answers
-    ans = ["", "", "", "", ""]
+    # Find basic variables and their values
+    solution = find_basic_variables()
     
-    # Identify basic variables
-    for i in range(5):  # Iterate through columns C1 to C5
-        for j in range(3):  # Check rows R1, R2, and R3
-            if array[j + 1][i + 1] == 1:  # Identify basic variables
-                for k in [1, 2, 3]:
-                    if k != j + 1 and array[k][i + 1] == 0:
-                        cnt += 1
-                if cnt == 2:
-                    ans[i] = array[j + 1][6]  # Assign RHS value to the variable
-                    cnt = 0
-                    break
-                cnt = 0
-            cnt = 0
-
-    # For variables not in the basis, set to 0
-    for i in range(5):
-        if ans[i] == "":
-            ans[i] = 0
-
-    # Current solution display
+    # Update the ans global variable
+    ans = solution
+    
+    # Format for display
     if choice == 1 or command == 0:  # For maximization or intermediate solution
         solution_text = f"""
         **x = {ans[0]}**  
         **y = {ans[1]}**  
         **s = {ans[2]}**  
         **t = {ans[3]}**  
-        **Z {'Min' if choice == 2 else 'Max'} = {ans[4]}**
+        **Z {'Max' if choice == 1 else 'Min'} = {ans[4]}**
         """
     else:  # For final minimization solution
-        # In minimization case, the final solution is in row 3, columns s and t
         solution_text = f"""
         **x = {array[3][3]}**  
         **y = {array[3][4]}**  
@@ -126,13 +140,13 @@ def print_ans(command, choice):
     else:
         st.markdown(solution_text)
         st.success("It is an optimal solution.")
-        
+
         # Final answer display
         if choice == 2:  # Minimization case
             final_text = f"**FINAL ANSWER:**  \nZ Min = {ans[4]} at ({array[3][3]}, {array[3][4]})"
         else:  # Maximization case
             final_text = f"**FINAL ANSWER:**  \nZ Max = {ans[4]} at ({ans[0]}, {ans[1]})"
-        
+
         st.markdown(final_text)
 
 def transpose_augument():
@@ -202,7 +216,7 @@ def solve_simplex_table(choice):
     # Display final table
     st.subheader("Final Simplex Table")
     st.dataframe(print_array(), use_container_width=True)
-    
+
     # For final solution
     print_ans(1, choice)
 
