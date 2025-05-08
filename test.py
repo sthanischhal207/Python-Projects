@@ -116,8 +116,24 @@ def print_ans(command, choice):
     # Update the ans global variable
     ans = solution
     
-    # Format for display
-    if choice == 1 or command == 0:  # For maximization or intermediate solution
+    # For minimization, the final solution values come from different places
+    if choice == 2 and command == 1:
+        # For minimization final solution, x and y values are from Z row
+        x_val = array[3][3]
+        y_val = array[3][4]
+        z_val = ans[4]  # Z value is still from the basic variables
+        
+        solution_text = f"""
+        **x = {x_val}**  
+        **y = {y_val}**  
+        **s = {ans[2]}**  
+        **t = {ans[3]}**  
+        **Z Min = {z_val}**
+        """
+        
+        final_text = f"**FINAL ANSWER:**  \nZ Min = {z_val} at ({x_val}, {y_val})"
+    else:
+        # For maximization or intermediate solutions
         solution_text = f"""
         **x = {ans[0]}**  
         **y = {ans[1]}**  
@@ -125,14 +141,8 @@ def print_ans(command, choice):
         **t = {ans[3]}**  
         **Z {'Max' if choice == 1 else 'Min'} = {ans[4]}**
         """
-    else:  # For final minimization solution
-        solution_text = f"""
-        **x = {array[3][3]}**  
-        **y = {array[3][4]}**  
-        **s = {ans[2]}**  
-        **t = {ans[3]}**  
-        **Z Min = {ans[4]}**
-        """
+        
+        final_text = f"**FINAL ANSWER:**  \nZ {'Max' if choice == 1 else 'Min'} = {ans[4]} at ({ans[0]}, {ans[1]})"
 
     if command == 0:
         st.markdown(solution_text)
@@ -140,13 +150,6 @@ def print_ans(command, choice):
     else:
         st.markdown(solution_text)
         st.success("It is an optimal solution.")
-
-        # Final answer display
-        if choice == 2:  # Minimization case
-            final_text = f"**FINAL ANSWER:**  \nZ Min = {ans[4]} at ({array[3][3]}, {array[3][4]})"
-        else:  # Maximization case
-            final_text = f"**FINAL ANSWER:**  \nZ Max = {ans[4]} at ({ans[0]}, {ans[1]})"
-
         st.markdown(final_text)
 
 def transpose_augument():
